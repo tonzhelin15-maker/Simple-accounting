@@ -5,5 +5,7 @@ document.querySelector("#prev").onclick=()=>shiftPeriod(-1);document.querySelect
 document.querySelector("#prev").addEventListener("click",()=>{if(view==="day")cursor.setDate(cursor.getDate()-1);else if(view==="year")cursor.setFullYear(cursor.getFullYear()-1);else cursor.setMonth(cursor.getMonth()-1);render()});
 document.querySelector("#next").addEventListener("click",()=>{if(view==="day")cursor.setDate(cursor.getDate()+1);else if(view==="year")cursor.setFullYear(cursor.getFullYear()+1);else cursor.setMonth(cursor.getMonth()+1);render()});
 // Capture the click first so older duplicate bindings cannot advance twice.
+document.querySelector("#prev").addEventListener("click",e=>{e.stopImmediatePropagation();shiftPeriod(-1)},true);
+document.querySelector("#next").addEventListener("click",e=>{e.stopImmediatePropagation();shiftPeriod(1)},true);
 // Remove every previous click binding and install exactly one handler per arrow.
 for (const [selector, amount] of [["#prev", -1], ["#next", 1]]) { const oldButton=document.querySelector(selector); const newButton=oldButton.cloneNode(true); oldButton.replaceWith(newButton); newButton.onclick=()=>shiftPeriod(amount); }
