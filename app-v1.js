@@ -4,3 +4,6 @@ document.querySelector("#prev").onclick=()=>shiftPeriod(-1);document.querySelect
 // Final navigation binding: day moves by one day, month by one month, year by one year.
 document.querySelector("#prev").addEventListener("click",()=>{if(view==="day")cursor.setDate(cursor.getDate()-1);else if(view==="year")cursor.setFullYear(cursor.getFullYear()-1);else cursor.setMonth(cursor.getMonth()-1);render()});
 document.querySelector("#next").addEventListener("click",()=>{if(view==="day")cursor.setDate(cursor.getDate()+1);else if(view==="year")cursor.setFullYear(cursor.getFullYear()+1);else cursor.setMonth(cursor.getMonth()+1);render()});
+// Capture the click first so older duplicate bindings cannot advance twice.
+document.querySelector("#prev").addEventListener("click",e=>{e.stopImmediatePropagation();shiftPeriod(-1)},true);
+document.querySelector("#next").addEventListener("click",e=>{e.stopImmediatePropagation();shiftPeriod(1)},true);
