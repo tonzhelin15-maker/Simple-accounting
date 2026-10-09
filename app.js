@@ -7,6 +7,7 @@ let state = readState();
 let view = "month";
 let cursor = new Date();
 let editingId = null;
+let calendarExpanded = true;
 
 function defaultState() {
   return {
@@ -97,6 +98,7 @@ function render() {
     .reduce((total, transaction) => total + Number(transaction.amount || 0), 0);
 
   document.querySelector("#periodLabel").textContent = getPeriod().label;
+  renderCalendar();
   document.querySelector("#summary").innerHTML = `
     <span>${view === "day" ? "今日" : view === "year" ? "全年" : "本期"}支出</span>
     <strong>${formatMoney(expense)}</strong>
@@ -117,6 +119,26 @@ function render() {
       <b class="${escapeHTML(transaction.kind)}">${sign}${formatMoney(transaction.amount)}</b>
     </div>`;
   }).join("");
+}
+
+function renderCalendar() {
+  const host = document.querySelector("#calendar");
+  if (view !== "month") { host.innerHTML = ""; return; }
+  const year = cursor.getFullYear(), month = cursor.getMonth();
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysWithEntries = new Set(state.transactions.map(t => {
+    const d = new Date(`${t.date}T00:00:00`);
+    return d.getFullYear() === year && d.getMonth() === month ? d.getDate() : null;
+  }).filter(Boolean));
+  const weekdayLabels = ["日", "一", "二", "三", "四", "五", "六"];
+  const cells = weekdayLabels.map(day => `<div class="calendar-weekday">${day}</div>`);
+  for (let i = 0; i < firstWeekday; i++) cells.push('<div class="calendar-cell empty"></div>');
+  for (let day = 1; day <= daysInMonth; day++) {
+    const selected = cursor.getDate() === day;
+    cells.push(`<button type="button" class="calendar-cell${selected ? " selected" : ""}" data-calendar-day="${day}"><span>${day}</span>${daysWithEntries.has(day) ? '<i class="calendar-dot"></i>' : '<i class="calendar-dot hidden"></i>'}</button>`);
+  }
+  host.innerHTML = `<div class="calendar-heading"><strong>${year}年${month + 1}月</strong><button type="button" id="calendarToggle">${calendarExpanded ? "⌃　收合月曆" : "⌄　展開月曆"}</button></div>${calendarExpanded ? `<div class="calendar-grid">${cells.join("")}</div>` : ""}`;
 }
 
 function accountName(id) {
@@ -194,6 +216,15 @@ document.querySelectorAll("nav button[data-view]").forEach(button => {
 });
 document.querySelector("#prev").addEventListener("click", () => movePeriod(-1));
 document.querySelector("#next").addEventListener("click", () => movePeriod(1));
+document.querySelector("#calendar").addEventListener("click", event => {
+  if (event.target.closest("#calendarToggle")) { calendarExpanded = !calendarExpanded; renderCalendar(); return; }
+  const dayButton = event.target.closest("[data-calendar-day]");
+  if (!dayButton) return;
+  cursor.setDate(Number(dayButton.dataset.calendarDay));
+  view = "day";
+  document.querySelectorAll("nav button[data-view]").forEach(button => button.classList.toggle("active", button.dataset.view === "day"));
+  render();
+});
 document.querySelector("#add").addEventListener("click", () => openEditor());
 document.querySelector("#kind").addEventListener("change", toggleDestination);
 
